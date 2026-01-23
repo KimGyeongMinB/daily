@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # django/drf
     'rest_framework',
+    'rest_framework_simplejwt',
 
     # app name
     'accounts', # 계정
@@ -86,7 +87,15 @@ DATABASES = {
     }
 }
 
+# Auth user model
 AUTH_USER_MODEL = 'accounts.User'
+
+# Jwt
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 
 # Password validation
