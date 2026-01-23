@@ -11,7 +11,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
     # 유저 회원가입 생성 함수
     def create(self, validated_data):
-        user = get_user_model().objects.create(
+        user = get_user_model().objects.create_user(
             nickname=validated_data['nickname'],
             password=validated_data['password'],
             email=validated_data['email']
