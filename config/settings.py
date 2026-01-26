@@ -107,7 +107,6 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
 
     "USER_ID_CLAIM": "user_id",
-
     "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
 }
