@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 # jwt
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import (TokenObtainPairView, 
+TokenRefreshView, TokenBlacklistView)
 
 # serializer
-from .serializers import SignupSerializer, CustomTokenObtainPairSerializer
+from .serializers import (SignupSerializer, CustomTokenObtainPairSerializer, CustomTokenBlacklistSerializer)
 
 # 회원가입
 class SignupAPIView(APIView):
@@ -86,10 +87,27 @@ class CustomTokenRefreshView(TokenRefreshView):
 
         return response
 
-
-
+# 인증 테스트
 class TestJWT(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         return Response({"ok": True})
+
+# 로그아웃
+class CustomTokenBlacklistView(TokenBlacklistView):
+    """
+    쿠키삭제 및 리프레시 토큰 블랙리스트
+    """
+    serializer_class = CustomTokenBlacklistSerializer
+
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get("refresh_token")
+        print(refresh)
+        serializer = self.get_serializer(data={"refresh": refresh})
+        serializer.is_valid(raise_exception=True)
+
+        res = Response({"detail": "로그아웃 완료"}, status=status.HTTP_200_OK)
+        res.delete_cookie("refresh_token")
+        res.delete_cookie("access_token")
+        return res
