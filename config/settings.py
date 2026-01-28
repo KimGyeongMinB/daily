@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # app name
     'accounts', # 계정
+    'conversions' # 텍스트 입력 후 변환
 ]
 
 MIDDLEWARE = [
