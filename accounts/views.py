@@ -1,3 +1,6 @@
+from django.core.cache import cache
+from django.contrib.auth import get_user_model
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,17 +10,58 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
 TokenRefreshView, TokenBlacklistView)
 
 # serializer
-from .serializers import (SignupSerializer, CustomTokenObtainPairSerializer, CustomTokenBlacklistSerializer)
+from .serializers import (SignupSerializer, SignupVerifySerializer,
+                        CustomTokenObtainPairSerializer, CustomTokenBlacklistSerializer)
+
+from .utils import sendemailrandomcodehelper
+
+# 트랜잭션
+from django.db import transaction
+
+# task
+from .tasks import send_verification_email
+
+User = get_user_model()
 
 # 회원가입
 class SignupAPIView(APIView):
-    
+    """
+    회원가입 APIView
+    이메일, 닉네임, 패스워드 입력 후 캐시 저장, 이메일 발송
+    """
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
+            code = sendemailrandomcodehelper.make_random_code()
+            cache.set(key=f"signup_data:{serializer.validated_data["email"]}",
+                    value={
+                        "email": serializer.validated_data["email"],
+                        "code": code,
+                    },
+                    timeout=300 # 5분
+                    )
+            
+            send_verification_email.delay(serializer.validated_data["email"], code)
+            return Response({"message": "전송완료"}, status.HTTP_200_OK)
+
+class SignupVerifyAPIView(APIView):
+
+    def post(self, request):
+        serializer = SignupVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+
+        if User.objects.filter(email=email).exists():
+            cache.delete(f"signup_data:{email}")
+            return Response({"message": "이미 가입 처리된 이메일입니다."},
+                                status=status.HTTP_200_OK)
+
+        with transaction.atomic():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            cache.delete(f"signup_data:{email}")
+            return Response({"message": "유저 생성이 완료 되었습니다."}, status=200)
+
 
 # 로그인 커스텀
 class CustomTokenObtainPairView(TokenObtainPairView):

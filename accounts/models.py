@@ -27,7 +27,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 입력해야하는 필드
     nickname = models.CharField(max_length=15)
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=20)
 
     # 비 입력 필드
     date_join = models.DateTimeField(auto_now_add=True)
@@ -43,4 +42,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     class Meta:
-        db_table = 'user'
+        db_table = 'users'
+    
+    def deactivate(self):
+        self.is_active = False
+        self.save(update_fields=["is_active"])
+    
+    def active(self):
+        self.is_active = True
+        self.save(update_fields=["is_active"])

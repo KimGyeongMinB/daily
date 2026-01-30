@@ -1,16 +1,52 @@
-from typing import Any
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import (TokenObtainPairSerializer, 
                                                 TokenBlacklistSerializer)
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.core.cache import cache
+
+User = get_user_model()
 
 # 회원가입
-class SignupSerializer(serializers.ModelSerializer):
+class SignupSerializer(serializers.Serializer):
+    email = serializers.EmailField()
     
-    class Meta:
-        model = get_user_model() # User Model
-        fields = ("nickname", "email", "password")
+    def validate_email(self, value):
+        # 이미 가입된 이메일인지
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("이미 가입된 이메일입니다.")
+        return value
+    
+    def signup_payload(self):
+        # 캐시 저장 데이터 페이로드
+        data = {
+            "email": self.validated_data["email"]
+        }
+        return data
+
+
+class SignupVerifySerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=6, min_length=6)
+    email = serializers.EmailField()
+    nickname = serializers.CharField(min_length=3)
+    password = serializers.CharField(min_length=6)
+
+    def validate(self, attrs):
+        email = attrs["email"]
+        code = attrs["code"]
+
+        saved_cache = cache.get(f"signup_data:{email}")
+
+        if not saved_cache:
+            raise serializers.ValidationError("인증 정보가 없거나 만료되었습니다. 다시 요청해주세요.")
+        
+        saved_cache_code = saved_cache.get("code")
+
+        if code != saved_cache_code:
+            raise serializers.ValidationError("인증 코드가 올바르지 않습니다.")
+        
+        attrs["signup_data"] = saved_cache
+        return attrs
 
     # 유저 회원가입 생성 함수
     def create(self, validated_data):
