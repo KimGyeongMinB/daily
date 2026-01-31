@@ -1,7 +1,9 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.request import Request
+
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 
+# 인증
 class CustomJWTAuthentication(JWTAuthentication):
     def authenticate(self, request: Request):
         header = request.COOKIES.get("access_token")

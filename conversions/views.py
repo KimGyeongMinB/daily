@@ -15,9 +15,9 @@ import requests
 import os
 
 load_dotenv() # 환경변수 읽어오기
-
 client = OpenAI(api_key=os.getenv("OPEN_API_KEY"))
 
+# openai
 class ConversionAPIView(APIView):
 
     def post(self, request):
@@ -63,6 +63,7 @@ class ConversionAPIView(APIView):
             conversion.status_done(completion.choices[0].message.content)
             return Response(ConversionSerializer(conversion).data, status=status.HTTP_201_CREATED)
         
+        # 실패
         except Exception as e:
             conversion.status_fail()
             print(f"!!! 에러 발생 원인: {e}")

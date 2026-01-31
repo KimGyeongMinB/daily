@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 
 User = get_user_model()
 
+# 이메일 인증
 @shared_task
 def send_verification_email(email, code):
     send_mail(

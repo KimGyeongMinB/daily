@@ -44,8 +44,8 @@ class SignupAPIView(APIView):
             send_verification_email.delay(serializer.validated_data["email"], code)
             return Response({"message": "전송완료"}, status.HTTP_200_OK)
 
+# 회원가입 완료
 class SignupVerifyAPIView(APIView):
-
     def post(self, request):
         serializer = SignupVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -131,7 +131,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
         return response
 
-# 인증 테스트
+# 인증 테스트(테스트용 실사용 x)
 class TestJWT(APIView):
     permission_classes = [IsAuthenticated]
 

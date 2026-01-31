@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import (TokenObtainPairSerializer, 
                                                 TokenBlacklistSerializer)
 
 from django.core.cache import cache
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -24,7 +24,7 @@ class SignupSerializer(serializers.Serializer):
         }
         return data
 
-
+# 회원가입 코드 입력, 이메일, 닉네임, 패스워드 입력하는 시리얼라이저
 class SignupVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6, min_length=6)
     email = serializers.EmailField()
