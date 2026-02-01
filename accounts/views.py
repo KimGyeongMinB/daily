@@ -23,10 +23,9 @@ from .tasks import send_verification_email
 
 User = get_user_model()
 
-# 회원가입
 class SignupAPIView(APIView):
     """
-    회원가입 APIView
+    회원가입
     이메일, 닉네임, 패스워드 입력 후 캐시 저장, 이메일 발송
     """
     def post(self, request):
@@ -44,12 +43,13 @@ class SignupAPIView(APIView):
             send_verification_email.delay(serializer.validated_data["email"], code)
             return Response({"message": "전송완료"}, status.HTTP_200_OK)
 
-# 회원가입 완료
 class SignupVerifyAPIView(APIView):
+    """
+    회원가입 완료
+    """
     def post(self, request):
         serializer = SignupVerifySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         email = serializer.validated_data["email"]
 
         if User.objects.filter(email=email).exists():
@@ -57,14 +57,16 @@ class SignupVerifyAPIView(APIView):
             return Response({"message": "이미 가입 처리된 이메일입니다."},
                                 status=status.HTTP_200_OK)
 
+        # 트랜잭션 적용
         with transaction.atomic():
             serializer.save()
             cache.delete(f"signup_data:{email}")
             return Response({"message": "유저 생성이 완료 되었습니다."}, status=200)
 
-
-# 로그인 커스텀
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    로그인 커스텀
+    """
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
@@ -96,8 +98,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         return response
 
-# 리프레시 토큰 발급
 class CustomTokenRefreshView(TokenRefreshView):
+    """
+    리프레시 토큰 발급
+    """
     def post(self, request, *args, **kwargs):
         # 쿠키에서 리프레시 토큰 가져오기
         refresh_token = request.COOKIES.get("refresh_token")
@@ -107,6 +111,7 @@ class CustomTokenRefreshView(TokenRefreshView):
         request.data["refresh_token"] = refresh_token
         response = super().post(request, *args, **kwargs)
         access_token = response.data.get("access")
+
         # access_token
         response.set_cookie(
             'access_token',
@@ -131,16 +136,9 @@ class CustomTokenRefreshView(TokenRefreshView):
 
         return response
 
-# 인증 테스트(테스트용 실사용 x)
-class TestJWT(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({"ok": True})
-
-# 로그아웃
 class CustomTokenBlacklistView(TokenBlacklistView):
     """
+    로그아웃
     쿠키삭제 및 리프레시 토큰 블랙리스트
     """
     serializer_class = CustomTokenBlacklistSerializer

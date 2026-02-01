@@ -7,8 +7,10 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# 회원가입
 class SignupSerializer(serializers.Serializer):
+    """
+    회원가입
+    """
     email = serializers.EmailField()
     
     def validate_email(self, value):
@@ -24,8 +26,10 @@ class SignupSerializer(serializers.Serializer):
         }
         return data
 
-# 회원가입 코드 입력, 이메일, 닉네임, 패스워드 입력하는 시리얼라이저
 class SignupVerifySerializer(serializers.Serializer):
+    """
+    회원가입 코드 입력, 이메일, 닉네임, 패스워드 입력하는 시리얼라이저
+    """
     code = serializers.CharField(max_length=6, min_length=6)
     email = serializers.EmailField()
     nickname = serializers.CharField(min_length=3)
@@ -57,9 +61,10 @@ class SignupVerifySerializer(serializers.Serializer):
         )
         return user
 
-# 로그인
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-
+    """
+    로그인
+    """
     # 토큰 추출
     @classmethod
     def get_token(cls, user):
@@ -80,4 +85,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class CustomTokenBlacklistSerializer(TokenBlacklistSerializer):
+    """
+    토큰 블랙리스트
+    """
     pass

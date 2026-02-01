@@ -5,9 +5,11 @@ from django.core.mail import send_mail
 
 User = get_user_model()
 
-# 이메일 인증
 @shared_task
 def send_verification_email(email, code):
+    """
+    # 이메일 인증
+    """
     send_mail(
         subject = "이메일 인증 코드입니다",
         message = f"인증 코드는 {code} 입니다.",
