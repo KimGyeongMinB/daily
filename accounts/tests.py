@@ -42,7 +42,7 @@ class SignupTests(APITestCase):
 
     # 테스트 이메일 발송
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def testsignup_email(self):
+    def test_signup_email(self):
         sign_up = self.client.post(
             path=self.signup_url,
             data={
@@ -58,7 +58,7 @@ class SignupTests(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     # 테스트 이메일 인증
-    def testsignup_verify(self):
+    def test_signup_verify(self):
         verify_code = cache.get(f"signup_data:{self.email}")
         self.assertIsNotNone(verify_code)
         code = verify_code.get("code")
@@ -82,7 +82,7 @@ class SignupTests(APITestCase):
         self.assertEqual(sign_up_verify.status_code, status.HTTP_200_OK)
 
     # 메일이 이미 가입되어 있는 경우
-    def testsignup_exists_email(self):
+    def test_signup_exists_email(self):
         User.objects.create_user(
             email=self.email,
             nickname=self.nickname,
@@ -177,7 +177,7 @@ class LogoutTest(APITestCase):
         self.logout_url = reverse("accounts:token_blaclist")
 
     # 로그아웃 테스트
-    def testlogout(self):
+    def test_logout(self):
         self.client.cookies['refresh_token'] = self.refresh_token
         response = self.client.post(self.logout_url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
