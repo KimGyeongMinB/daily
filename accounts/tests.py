@@ -32,10 +32,10 @@ class SignupTests(APITestCase):
     """
     def setUp(self):
         self.client = APIClient()
-        self.email = "test123@test.com"
-        self.nickname = "testuser"
-        self.password = "test1234@@"
-        self.exists_email = "test123@test.com" # 이미 존재하는 이메일 검증
+        self.email = "test12356@test.com"
+        self.nickname = "testuser56"
+        self.password = "test123456@@"
+        self.exists_email = "test12356@test.com" # 이미 존재하는 이메일 검증
         self.code = "123456"
         self.signup_url = reverse("accounts:sign_up")
         self.signup_verify_url = reverse("accounts:sign_up_verify")
@@ -99,7 +99,7 @@ class SignupTests(APITestCase):
         
         # 확인
         self.assertEqual(sign_up.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("이미 가입된 이메일입니다.", sign_up.data)
+        self.assertEqual(sign_up.data['email'][0], "이미 가입된 이메일입니다.")
 
 class SigninTests(APITestCase):
     """
@@ -110,10 +110,13 @@ class SigninTests(APITestCase):
         self.nickname = "testnickname"
         self.email = "test123@test.com"
         self.password = "test12345"
+
+        self.fail_email = "test1@test.com"
+        self.fail_password = "test123456"
         self.signin_url = reverse("accounts:token_obtain_pair")
 
     # 테스트 로그인
-    def testsignin(self):
+    def test_signin(self):
         User.objects.create_user(
             nickname = self.nickname,
             email = self.email,
@@ -134,6 +137,28 @@ class SigninTests(APITestCase):
         # 토큰값이 들어있는지 확인
         self.assertIn('access_token', sign_in.cookies)
         self.assertIn('refresh_token', sign_in.cookies)
+
+    def test_fail_signin(self):
+        User.objects.create_user(
+            nickname = self.nickname,
+            email = self.email,
+            password = self.password
+        )
+
+        sign_in = self.client.post(
+        path=self.signin_url,
+            data={
+                "email": self.fail_email,
+                "password": self.fail_password
+            },
+            format="json"
+            )
+        
+        self.assertEqual(sign_in.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 토큰값이 들어있는지 확인
+        self.assertNotIn('access_token', sign_in.cookies)
+        self.assertNotIn('refresh_token', sign_in.cookies)
 
 
 class LogoutTest(APITestCase):

@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 
+    # swagger
+    'drf_spectacular',
+
     # celery
     "celery",
     "django_celery_beat",
@@ -133,9 +136,20 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # Jwt
 REST_FRAMEWORK = {
+    # 커스텀 인증
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'accounts.auth.CustomJWTAuthentication',
-    )
+    ),
+    # swagger
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Daily API Project',
+    'DESCRIPTION': 'Daily 프로젝트의 API 문서입니다. (Accounts 인증 포함)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_AUTHENTICATION': [],
 }
 
 # simple jwt

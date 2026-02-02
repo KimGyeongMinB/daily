@@ -45,9 +45,13 @@ class SignupVerifySerializer(serializers.Serializer):
             raise serializers.ValidationError("인증 정보가 없거나 만료되었습니다. 다시 요청해주세요.")
         
         saved_cache_code = saved_cache.get("code")
+        saved_cache_email = saved_cache.get("email")
 
         if code != saved_cache_code:
             raise serializers.ValidationError("인증 코드가 올바르지 않습니다.")
+        
+        if email != saved_cache_email:
+            raise serializers.ValidationError("이메일이 올바르지 않습니다.")
         
         attrs["signup_data"] = saved_cache
         return attrs
