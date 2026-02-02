@@ -52,24 +52,24 @@ Swagger Documentation: http://localhost:8000/api/schema/swagger-ui/
 Tip: Swagger 페이지에서 AI 글 변환 API를 직접 테스트해 볼 수 있습니다.
 
 ## 주요 Directory
-daily
-  ├─ accounts/ # 계정    
-  │  ├─ auth.py # 인증
-  │  ├─ models.py # 모델
-  │  ├─ tasks.py # Celery 비동기 발송 태스크
-  │  ├─ utils.py # 공통 유틸
-  │  ├─ views.py # 회원가입, 로그인, 로그아웃 API
-  │  └─ __init__.py
-  ├─ compose.yaml  # 도커 컨테이너 설정          
-  ├─ config/
-  │  ├─ celery.py # celery
-  │  ├─ settings.py # setting
-  ├─ conversions # AI 기반 글 변환
-  │  ├─ models.py # 모델
-  │  ├─ views.py # GPT-4o-mini 연동 API
-  │  └─ __init__.py
-  ├─ Dockerfile # 도커파일
-  └─ requirements.txt # 의존성 라이브러리
+#daily
+#├─ accounts/ # 계정    
+#│  ├─ auth.py # 인증
+#│  ├─ models.py # 모델
+#│  ├─ tasks.py # Celery 비동기 발송 태스크
+#│  ├─ utils.py # 공통 유틸
+#│  ├─ views.py # 회원가입, 로그인, 로그아웃 API
+#│  └─ __init__.py
+#├─ compose.yaml  # 도커 컨테이너 설정          
+#├─ config/
+#│  ├─ celery.py # celery
+#│  ├─ settings.py # setting
+#├─ conversions # AI 기반 글 변환
+#│  ├─ models.py # 모델
+#│  ├─ views.py # GPT-4o-mini 연동 API
+#│  └─ __init__.py
+#├─ Dockerfile # 도커파일
+#└─ requirements.txt # 의존성 라이브러리
 
 ## Tech Stack
 * **Framework:** Django, Django Rest Framework (DRF)
