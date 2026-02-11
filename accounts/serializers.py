@@ -93,3 +93,9 @@ class CustomTokenBlacklistSerializer(TokenBlacklistSerializer):
     토큰 블랙리스트
     """
     pass
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'nickname') # 보여주고 싶은 필드만 선택
+        read_only_fields = ('email',) # 이메일은 수정 불가하도록 설정

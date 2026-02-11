@@ -46,9 +46,18 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
 
     # swagger
     'drf_spectacular',
+
+    # allauth
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.kakao',
 
     # celery
     "celery",
@@ -60,6 +69,8 @@ INSTALLED_APPS = [
     'conversions' # 텍스트 입력 후 변환
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,6 +79,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # allauth middleware
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -83,6 +97,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -114,6 +129,12 @@ DATABASES = {
     }
 }
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+
+    # django-allauth 전용 인증 백엔드
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
@@ -142,6 +163,39 @@ REST_FRAMEWORK = {
     ),
     # swagger
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# dj-rest-auth
+REST_AUTH = {
+    'USE_JWT': True,
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.UserSerializer'
+}
+
+# allauth 관련 세부 설정
+ACCOUNT_AUTHENTICATION_METHOD = 'email'       # ID 대신 이메일로 로그인
+ACCOUNT_EMAIL_REQUIRED = True                 # 회원가입 시 이메일 필수 입력
+ACCOUNT_UNIQUE_EMAIL = True                   # 이메일 중복 가입 방지
+ACCOUNT_USERNAME_REQUIRED = False             # 회원가입 시 username 입력창 제거
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None      # 우리 유저 모델에는 username 필드가 없음을 명시
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    "kakao": {
+        "APPS": [
+            {
+                "client_id": os.getenv("CLIENT_ID"),
+                "secret": os.getenv("SECRET"),
+                "key": "",
+            },
+        ],
+        "SCOPE": [
+            "profile_nickname",
+            "account_email",
+        ],
+        # "AUTH_PARAMS": {
+        #     "access_type": "online",
+        # },
+    }
 }
 
 SPECTACULAR_SETTINGS = {
@@ -206,3 +260,31 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# # settings.py 맨 아래 추가
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         'django.request': {  # 요청 에러 상세 출력
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'allauth': {  # 소셜 로그인 과정 상세 출력
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'urllib3': {  # 외부(카카오) 통신 내용 출력
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#         },
+#     },
+# }

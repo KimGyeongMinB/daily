@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
 
 # swagger
 from drf_spectacular.utils import extend_schema
@@ -7,7 +8,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 # jwt
 from rest_framework_simplejwt.views import (TokenObtainPairView, 
@@ -18,7 +19,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .serializers import (SignupSerializer, SignupVerifySerializer,
                         CustomTokenObtainPairSerializer, CustomTokenBlacklistSerializer)
 
-from .utils import sendemailrandomcodehelper
+from .utils import sendemailrandomcodehelper, SetCookie, Kakaoauth
 
 # 트랜잭션
 from django.db import transaction
@@ -26,6 +27,13 @@ from django.db import transaction
 # task
 from .tasks import send_verification_email
 
+# allauth
+from allauth.socialaccount.providers.kakao.views import KakaoOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+
+from dotenv import load_dotenv
+load_dotenv()
 
 User = get_user_model()
 
@@ -97,32 +105,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        access_token = response.data.get('access')
-        refresh_token = response.data.get('refresh')
-
-        # access_token
-        response.set_cookie(
-            'access_token',
-            access_token,
-            httponly=True, # 자바스크립트 접근 불가능(XSS 방지)
-            secure=False, # https 에서만 연결(개발시 False)
-            samesite='Lax' # CSRF 완화
-        )
-
-        # refresh_token
-        response.set_cookie(
-            'refresh_token',
-            refresh_token,
-            httponly=True, # 자바스크립트 접근 불가능(XSS 방지)
-            secure=False, # https 에서만 연결(개발시 False)
-            samesite='Lax' # CSRF 완화
-        )
-
-        # json 데이터 삭제
-        del response.data['access']
-        del response.data['refresh']
-
-        return response
+        return SetCookie.response_set_cookie(response, response.data.get('access'), response.data.get('refresh'))
 
 class CustomTokenRefreshView(TokenRefreshView):
     @extend_schema(
@@ -143,6 +126,7 @@ class CustomTokenRefreshView(TokenRefreshView):
         refresh_token = request.COOKIES.get("refresh_token")
         if not refresh_token:
             return Response({"detail": "리프레시 토큰이 없습니다."}, status=401)
+        
         serializer = self.get_serializer(data={"refresh": refresh_token})
 
         try:
@@ -151,32 +135,67 @@ class CustomTokenRefreshView(TokenRefreshView):
             raise InvalidToken(e.args[0]) from e
 
         response = Response(serializer.validated_data, status=status.HTTP_200_OK)
-        access_token = response.data.get("access")
-        refresh_token = response.data.get("refresh")
-        
-        # access_token
-        response.set_cookie(
-            'access_token',
-            access_token,
-            httponly=True, # 자바스크립트 접근 불가능(XSS 방지)
-            secure=False, # https 에서만 연결(개발시 False)
-            samesite='Lax' # CSRF 완화
-        )
+        return SetCookie.response_set_cookie(response, response.data.get('access'), response.data.get('refresh'))
 
-        # refresh_token
-        response.set_cookie(
-            'refresh_token',
-            refresh_token,
-            httponly=True, # 자바스크립트 접근 불가능(XSS 방지)
-            secure=False, # https 에서만 연결(개발시 False)
-            samesite='Lax' # CSRF 완화
-        )
+class KakaoLoginStartView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-        # json 데이터 삭제
-        del response.data['access']
-        del response.data['refresh']
+    @extend_schema(
+        summary="카카오 로그인",
+        description=(
+            "카카오 로그인을 시도합니다.\n"
+            "스웨거에서 실시하지 않습니다.\n"
+            "http://localhost:8000/accounts/auth/kakao/start/ 로 들어가 로그인을 진행합니다.\n"
+            "성공시 자동으로 리다이렉트 됩니다.\n"
+        ),
+        request=None,
+        responses={200: None}
+    )
 
-        return response
+    def get(self, request):
+        kakao_auth_url = Kakaoauth.kakao_auth_url()
+        return redirect(kakao_auth_url)
+
+class KakaoCallbackView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        summary="카카오 로그인 성공시 코드 발급받기 위한 뷰",
+        description=(
+            "이 뷰는 스웨거에서 사용하지 않습니다."
+        ),
+    )
+
+    def get(self, request):
+        code = request.GET.get('code')
+        if code:
+            return Response(f"<h1>인가 코드 발급 완료</h1><p>{code}</p><p>위 코드를 복사해서 스웨거 POST 요청에 넣으세요.</p>")
+        return Response("코드를 받지 못했습니다.", status=400)
+
+class KakaoLogin(SocialLoginView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    adapter_class = KakaoOAuth2Adapter 
+    client_class = OAuth2Client
+    callback_url = "http://localhost:8000/accounts/kakao/callback"
+
+    @extend_schema(
+        summary="카카오 로그인",
+        description=(
+            "받은 코드를 입력합니다.\n"
+            "code=받은 코드\n"
+            "만약 다른 입력값들(access_token 등) 이 있으면 지우고 code= 에만 입력해주세요.\n"
+            "카카오 동의항목에서 nickname 을 따로 받지 않기 때문에 닉네임은 adapters.py 에서 랜덤 생성됩니다.\n"
+        ),
+    )
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            return SetCookie.response_set_cookie(response, response.data.get("access"), response.data.get("refresh"))
+        except Exception as e:
+            raise e
 
 class CustomTokenBlacklistView(TokenBlacklistView):
     serializer_class = CustomTokenBlacklistSerializer
