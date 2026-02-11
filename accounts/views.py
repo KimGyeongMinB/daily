@@ -154,7 +154,7 @@ class KakaoLoginStartView(APIView):
     )
 
     def get(self, request):
-        kakao_auth_url = Kakaoauth.kakao_auth_url()
+        kakao_auth_url = Kakaoauth().kakao_auth_url()
         return redirect(kakao_auth_url)
 
 class KakaoCallbackView(APIView):
