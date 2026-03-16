@@ -1,5 +1,8 @@
 import requests
 import os
+import hashlib
+
+from django.core.cache import cache
 
 from celery import shared_task, chain
 from bs4 import BeautifulSoup
@@ -27,10 +30,17 @@ def request_text_beautifulsoup_task(input_url, timeout: int):
 
 @shared_task
 def openai_task(input_text, conversion_id):
-    # 현재 변환 작업 객체 조회
-    conversion = Conversion.objects.get(id=conversion_id)
+    # 텍스트 해시
+    cache_key = hashlib.md5(input_text.encode()).hexdigest()
+    cache_result = cache.get(cache_key)
+    if cache_result:
+        conversion = Conversion.objects.get(id=conversion_id)
+        conversion.status_done(cache_result)
+        return {"conversion_id": conversion_id, "cached": True}
 
+    # 현재 변환 작업 객체 조회
     # AI 처리 시작 상태로 변경
+    conversion = Conversion.objects.get(id=conversion_id)
     conversion.status_processing()
 
     # OpenAI에 텍스트를 보내 쉬운 문장으로 변환
@@ -50,10 +60,12 @@ def openai_task(input_text, conversion_id):
         ]
     )
 
-    # 응답 결과를 저장하고 상태를 완료로 변경
+    # 응답 결과를 저장
+    # 상태를 완료로 변경
+    # 캐시 저장
     result_text = completion.choices[0].message.content
     conversion.status_done(result_text)
-
+    cache.set(cache_key, result_text, timeout=3600)
     return {"conversion_id": conversion_id}
 
 

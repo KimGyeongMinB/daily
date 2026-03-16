@@ -144,6 +144,17 @@ DATABASES = {
     }
 }
 
+# 캐시
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://redis:6379/1',  # Redis 컨테이너 주소 (compose.yaml에 맞춤)
+    }
+}
+
+# 캐시 타임아웃 (1시간 = 3600초)
+CACHE_TIMEOUT = 3600
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 
