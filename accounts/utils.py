@@ -4,7 +4,6 @@ import random
 import uuid
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
 class SendEmailRandomCodeHelper:
@@ -19,7 +18,7 @@ sendemailrandomcodehelper = SendEmailRandomCodeHelper()
 
 class RandomNickname:
     """
-    코드 6자리 랜덤으로 만들어주는 클래스
+    닉네임 랜덤
     """
     def make_random_nickname(self):
         adjectives = ["행복한", "즐거운", "용감한", "빠른", '멍청한', '느린', '키가 큰']

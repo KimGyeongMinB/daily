@@ -11,6 +11,7 @@ from drf_spectacular.types import OpenApiTypes
 from openai import OpenAI
 from dotenv import load_dotenv
 
+from .utils import ConversionLogUtils
 from .tasks import run_openai_task
 
 # from bs4 import BeautifulSoup
@@ -56,6 +57,16 @@ class ConversionAPIView(APIView):
                 text=serializer.validated_data.get("text"),
                 url=serializer.validated_data.get("url"),
             )
+
+        ConversionLogUtils.conversion_log(
+            conversion=conversion,
+            status="PENDING",
+            extra={
+                "source": "view",
+                "text": bool(conversion.text),
+                "url": bool(conversion.url)
+            }
+        )
 
         run_openai_task.delay(conversion.id)
         return Response(

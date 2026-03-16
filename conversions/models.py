@@ -40,3 +40,13 @@ class Conversion(models.Model):
         self.status = "DONE"
         self.result = result_text
         self.save(update_fields=["status", "result"])
+
+# 로그 기록용 모델
+class ConversionLog(models.Model):
+    conversion = models.ForeignKey(Conversion, on_delete=models.CASCADE, related_name="logs") 
+    status = models.CharField(max_length=20) # 상태
+    retry_count = models.PositiveIntegerField(default=0) # 시도횟수
+    error_code = models.CharField(max_length=50, blank=True) # 에러 코드
+    error_message = models.TextField(blank=True) # 에러 메세지
+    task_id = models.CharField(max_length=255, blank=True) # task id
+    extra = models.JSONField(default=dict, blank=True) # 로그 부가 정보
